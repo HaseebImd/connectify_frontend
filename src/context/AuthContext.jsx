@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = () => {
       const isAuth = authService.isAuthenticated();
       const currentUser = authService.getCurrentUser();
-      
+
       setIsAuthenticated(isAuth);
       setUser(currentUser);
       setLoading(false);
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const result = await authService.login(credentials);
-      
+
       if (result.success) {
         setUser(result.data.user);
         setIsAuthenticated(true);
@@ -43,6 +43,20 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Login error in context:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+  const signup = async (data) => {
+    try {
+      const result = await authService.signup(data);
+
+      if (result.success) {
+        return { success: true };
+      } else {
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      console.error('Signup error in context:', error);
       return { success: false, error: 'An unexpected error occurred' };
     }
   };
@@ -67,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     loading,
     login,
+    signup,
     logout,
     updateUser,
   };

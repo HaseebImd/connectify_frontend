@@ -17,14 +17,14 @@ const CreatePost = ({ user }) => {
                             />
                         ) : (
                             <span className="text-white font-medium text-sm">
-                                {user?.name?.charAt(0)}
+                                {user?.username?.charAt(0).toUpperCase()}
                             </span>
                         )}
                     </div>
                     <div className="flex-1">
                         <input
                             type="text"
-                            placeholder={`What's on your mind, ${user?.name || 'User'}?`}
+                            placeholder={`What's on your mind, ${user?.username || 'User'}?`}
                             className="w-full px-4 py-3 bg-gray-100 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-blue-200 text-gray-700 placeholder-gray-500"
                         />
                     </div>

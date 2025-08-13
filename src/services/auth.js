@@ -16,9 +16,9 @@ export const authService = {
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Login error:', error);
-      
+
       let errorMessage = 'Login failed. Please try again.';
-      
+
       if (error.response?.status === 401) {
         errorMessage = 'Invalid email or password.';
       } else if (error.response?.status === 400) {
@@ -30,6 +30,43 @@ export const authService = {
       return { success: false, error: errorMessage };
     }
   },
+
+  signup: async (data) => {
+    try {
+      const response = await api.post('/users/register/', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Signup error:', error);
+      let errorMessage = 'Signup failed. Please try again.';
+
+      if (error.response?.status === 400) {
+        const errData = error.response.data;
+
+        if (typeof errData === 'object' && !Array.isArray(errData)) {
+          // Example: { email: ["user with this email address already exists."] }
+          const firstKey = Object.keys(errData)[0];
+          errorMessage = errData[firstKey]?.[0] || 'Invalid signup data.';
+        } else if (Array.isArray(errData)) {
+          // Example: ["Some general error"]
+          errorMessage = errData[0];
+        } else if (errData?.detail) {
+          // Example: { detail: "Some detail message" }
+          errorMessage = errData.detail;
+        }
+      } else if (
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ERR_NETWORK'
+      ) {
+        errorMessage = 'Unable to connect to server. Please check your connection.';
+      }
+
+      return { success: false, error: errorMessage };
+    }
+  }
+  ,
 
   // Logout user
   logout: () => {
@@ -71,6 +108,7 @@ export const authService = {
   getUserProfile: async () => {
     try {
       const response = await api.get('/users/me/');
+      console.log('Get profile response:', response);
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Get profile error:', error);
@@ -82,19 +120,19 @@ export const authService = {
   updateUserProfile: async (profileData) => {
     try {
       const response = await api.patch('/users/me/', profileData);
-      
+
       // Update stored user data
       localStorage.setItem('user', JSON.stringify(response.data));
-      
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Update profile error:', error);
-      
+
       let errorMessage = 'Failed to update profile';
       if (error.response?.status === 400) {
         errorMessage = error.response.data?.detail || 'Invalid profile data';
       }
-      
+
       return { success: false, error: errorMessage };
     }
   }

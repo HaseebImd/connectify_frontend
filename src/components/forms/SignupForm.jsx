@@ -10,7 +10,7 @@ const SignupForm = ({ onSubmit, loading = false }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  
+
   const {
     register,
     handleSubmit,
@@ -19,12 +19,11 @@ const SignupForm = ({ onSubmit, loading = false }) => {
   } = useForm({
     mode: 'onChange',
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      name: '',
       username: '',
       email: '',
       password: '',
-      confirmPassword: '',
+      password2: '',
     },
   });
 
@@ -44,10 +43,13 @@ const SignupForm = ({ onSubmit, loading = false }) => {
 
   const handleFormSubmit = (data) => {
     const { confirmPassword: _confirmPassword, ...submitData } = data;
-    const formData = {
-      ...submitData,
-      profilePic: profileImage,
-    };
+    const formData = new FormData();
+    Object.entries(submitData).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+    if (profileImage) {
+      formData.append('profile_image', profileImage);
+    }
     onSubmit?.(formData);
   };
 
@@ -91,50 +93,23 @@ const SignupForm = ({ onSubmit, loading = false }) => {
         </div>
       </div>
 
-      {/* First Name and Last Name Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="First Name"
-          type="text"
-          placeholder="Enter your first name"
-          fullWidth
-          required
-          leftIcon={<User size={16} />}
-          error={errors.firstName?.message}
-          {...register('firstName', {
-            required: 'First name is required',
-            minLength: {
-              value: 2,
-              message: 'First name must be at least 2 characters',
-            },
-            pattern: {
-              value: /^[a-zA-Z]+$/,
-              message: 'First name can only contain letters',
-            },
-          })}
-        />
-
-        <Input
-          label="Last Name"
-          type="text"
-          placeholder="Enter your last name"
-          fullWidth
-          required
-          leftIcon={<User size={16} />}
-          error={errors.lastName?.message}
-          {...register('lastName', {
-            required: 'Last name is required',
-            minLength: {
-              value: 2,
-              message: 'Last name must be at least 2 characters',
-            },
-            pattern: {
-              value: /^[a-zA-Z]+$/,
-              message: 'Last name can only contain letters',
-            },
-          })}
-        />
-      </div>
+      {/* Full Name Row */}
+      <Input
+        label="Full Name"
+        type="text"
+        placeholder="Enter your full name"
+        fullWidth
+        required
+        leftIcon={<User size={16} />}
+        error={errors.name?.message}
+        {...register('name', {
+          required: 'Name is required',
+          minLength: {
+            value: 3,
+            message: 'Name must be at least 3 characters',
+          },
+        })}
+      />
 
       {/* Username Field */}
       <Input
@@ -229,8 +204,8 @@ const SignupForm = ({ onSubmit, loading = false }) => {
             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         }
-        error={errors.confirmPassword?.message}
-        {...register('confirmPassword', {
+        error={errors.password2?.message}
+        {...register('password2', {
           required: 'Please confirm your password',
           validate: (value) =>
             value === password || 'Passwords do not match',
@@ -249,9 +224,9 @@ const SignupForm = ({ onSubmit, loading = false }) => {
         {loading ? 'Creating account...' : 'Create Account'}
       </Button>
 
-    <p className="text-center text-sm text-text-secondary">
-      or
-    </p>
+      <p className="text-center text-sm text-text-secondary">
+        or
+      </p>
 
       {/* Social Signup Buttons */}
       <Button
@@ -288,8 +263,8 @@ const SignupForm = ({ onSubmit, loading = false }) => {
       {/* Login Prompt */}
       <div className="text-center text-sm text-text-secondary">
         Already have an account?{' '}
-        <Link 
-          to="/login" 
+        <Link
+          to="/login"
           className="text-primary font-medium hover:text-primary-hover transition-colors no-underline"
         >
           Sign in

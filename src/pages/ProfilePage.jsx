@@ -50,7 +50,7 @@ const ProfilePage = () => {
 
     try {
       const result = await authService.updateUserProfile(profileData);
-      
+
       if (result.success) {
         setSuccess('Profile updated successfully!');
         setEditing(false);
@@ -103,30 +103,30 @@ const ProfilePage = () => {
           <div className="max-w-4xl mx-auto px-4">
             {/* Cover Image */}
             <div className="relative mb-8">
-              <div className="h-48 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-2xl shadow-xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-                <div className="absolute bottom-4 left-6 text-white">
-                  <h1 className="text-3xl font-bold mb-1">{user?.username || 'User'}</h1>
-                  <p className="text-blue-100">{user?.email}</p>
-                </div>
-                {user?.is_verified && (
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-white bg-opacity-20 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full border border-white border-opacity-30">
-                      ✓ Verified
-                    </span>
-                  </div>
+              <div className="h-48 rounded-2xl shadow-xl relative overflow-hidden">
+                {user?.cover_image ? (
+                  <img
+                    src={`http://127.0.0.1:7000${user.cover_image}`}
+                    alt="Cover"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600"></div>
                 )}
+
               </div>
-              
+
               {/* Profile Image */}
               <div className="absolute -bottom-12 left-6">
                 <div className="relative">
                   {user?.profile_image ? (
-                    <img
-                      src={`http://127.0.0.1:7000${user.profile_image}`}
-                      alt={user.username || 'Profile'}
-                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl"
-                    />
+                    <div className="w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden relative">
+                      <img
+                        src={`http://127.0.0.1:7000${user.profile_image}`}
+                        alt={user.username || 'Profile'}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    </div>
                   ) : (
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center border-4 border-white shadow-xl">
                       <User size={32} color={colors.textSecondary} />
@@ -198,13 +198,44 @@ const ProfilePage = () => {
                         <p className="font-medium text-gray-900">{user?.email}</p>
                       </div>
                     </div>
+                    {/* show user location */}
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <MapPin size={16} className="text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Location</p>
+                        <p className="font-medium text-gray-900">{user?.location || 'Not set'}</p>
+                      </div>
+                    </div>
+                    {/* show user website */}
+
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <LinkIcon size={16} className="text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Website</p>
+                        <p className="font-medium text-gray-900">{user?.website || 'Not set'}</p>
+                      </div>
+                    </div>
+
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                         <Calendar size={16} className="text-purple-600" />
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Joined</p>
-                        <p className="font-medium text-gray-900">Recently</p>
+                        <p className="font-medium text-gray-900">
+                          {user.date_joined ? new Date(user.date_joined).toLocaleString(undefined, {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          }) : ''}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -282,7 +313,7 @@ const ProfilePage = () => {
                       </Button>
                     </div>
                   </div>
-                  
+
                   {/* Messages */}
                   {error && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
