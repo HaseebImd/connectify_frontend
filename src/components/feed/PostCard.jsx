@@ -1,92 +1,101 @@
 import React, { useState } from 'react';
-import { Heart, MessageCircle, Share, MoreHorizontal, Play, Download, Eye } from 'lucide-react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Play, MapPin, Eye } from 'lucide-react';
 import Card from '../ui/Card';
+import postService from '../../services/postService';
 
-const PostCard = ({ post }) => {
-  const [liked, setLiked] = useState(false);
+const PostCard = ({ post, onLike, onViewIncrement }) => {
+  const [liked, setLiked] = useState(post.is_liked || false);
   const [showComments, setShowComments] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.like_count || 0);
 
   const handleLike = () => {
-    setLiked(!liked);
+    const newLikedState = !liked;
+    setLiked(newLikedState);
+    setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+    
+    // Call parent handler for API update
+    if (onLike) {
+      onLike(post.id);
+    }
   };
 
-  const formatTime = (timestamp) => {
-    const now = new Date();
-    const postTime = new Date(timestamp);
-    const diffInHours = Math.floor((now - postTime) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h`;
-    return `${Math.floor(diffInHours / 24)}d`;
+  const handleViewIncrement = () => {
+    if (onViewIncrement) {
+      onViewIncrement(post.id);
+    }
   };
 
   const renderMedia = () => {
-    switch (post.type) {
-      case 'image':
-        return (
-          <div className="mt-3">
-            <img
-              src={post.media.url}
-              alt={post.media.alt}
-              className="w-full rounded-lg object-cover max-h-96"
-            />
-          </div>
-        );
-      
-      case 'video':
-        return (
-          <div className="mt-3 relative">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg aspect-video flex items-center justify-center relative overflow-hidden">
-              {/* Video thumbnail background */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              
-              {/* Play button and info */}
-              <div className="text-center text-white relative z-10">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-4 mb-3 inline-flex">
-                  <Play className="w-8 h-8 text-white fill-white" />
+    if (!post.media || post.media.length === 0) return null;
+
+    return (
+      <div className="mt-3">
+        {post.media.length === 1 ? (
+          // Single media item
+          <div className="rounded-lg overflow-hidden">
+            {post.media[0].media_type === 'image' ? (
+              <img
+                src={postService.getMediaUrl(post.media[0].file)}
+                alt="Post media"
+                className="w-full object-cover max-h-96 cursor-pointer"
+                onClick={handleViewIncrement}
+              />
+            ) : (
+              <div className="relative bg-black rounded-lg aspect-video">
+                <video
+                  src={postService.getMediaUrl(post.media[0].file)}
+                  poster={post.media[0].thumbnail ? postService.getMediaUrl(post.media[0].thumbnail) : undefined}
+                  className="w-full h-full object-cover"
+                  controls
+                  onClick={handleViewIncrement}
+                />
+                <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                  {post.media[0].duration_seconds ? `${Math.floor(post.media[0].duration_seconds / 60)}:${(post.media[0].duration_seconds % 60).toString().padStart(2, '0')}` : 'Video'}
                 </div>
-                <p className="text-sm font-medium mb-1">{post.media.title}</p>
-                <p className="text-xs opacity-80">{post.media.duration}</p>
               </div>
-              
-              {/* Video preview pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="w-full h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-              </div>
-            </div>
+            )}
           </div>
-        );
-      
-      case 'pdf':
-        return (
-          <div className="mt-3">
-            <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-start space-x-3">
-                <div className="w-12 h-16 bg-red-500 rounded flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xs font-bold">PDF</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{post.media.title}</h4>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{post.media.description}</p>
-                  <div className="flex items-center space-x-4 mt-3">
-                    <button className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm">
-                      <Eye className="w-4 h-4" />
-                      <span>View</span>
-                    </button>
-                    <button className="flex items-center space-x-1 text-gray-600 hover:text-gray-700 text-sm">
-                      <Download className="w-4 h-4" />
-                      <span>Download</span>
-                    </button>
+        ) : (
+          // Multiple media items - grid layout
+          <div className={`grid gap-1 rounded-lg overflow-hidden ${
+            post.media.length === 2 ? 'grid-cols-2' : 
+            post.media.length === 3 ? 'grid-cols-2' : 
+            'grid-cols-2'
+          }`}>
+            {post.media.slice(0, 4).map((mediaItem, index) => (
+              <div key={mediaItem.id} className="relative">
+                {mediaItem.media_type === 'image' ? (
+                  <img
+                    src={postService.getMediaUrl(mediaItem.file)}
+                    alt={`Post media ${index + 1}`}
+                    className="w-full h-32 object-cover cursor-pointer"
+                    onClick={handleViewIncrement}
+                  />
+                ) : (
+                  <div className="relative bg-black h-32">
+                    <video
+                      src={postService.getMediaUrl(mediaItem.file)}
+                      poster={mediaItem.thumbnail ? postService.getMediaUrl(mediaItem.thumbnail) : undefined}
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Play className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                </div>
+                )}
+                {/* Show count overlay for 4+ images */}
+                {index === 3 && post.media.length > 4 && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <span className="text-white text-lg font-semibold">+{post.media.length - 4}</span>
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
           </div>
-        );
-      
-      default:
-        return null;
-    }
+        )}
+      </div>
+    );
   };
 
   return (
@@ -95,12 +104,41 @@ const PostCard = ({ post }) => {
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">{post.author.name.charAt(0)}</span>
+            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+              {post.user?.profile_image ? (
+                <img
+                  src={postService.getMediaUrl(post.user.profile_image)}
+                  alt={post.user.name || post.user.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-white font-medium text-sm">
+                  {(post.user?.name || post.user?.username || 'U').charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">{post.author.name}</h3>
-              <p className="text-sm text-gray-500">{formatTime(post.timestamp)}</p>
+              <h3 className="font-semibold text-gray-900">
+                {post.user?.name || post.user?.username || 'Unknown User'}
+              </h3>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <span>{postService.formatPostDate(post.created_at)}</span>
+                {post.location && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-3 h-3" />
+                      <span>{post.location}</span>
+                    </div>
+                  </>
+                )}
+                {post.is_edited && (
+                  <>
+                    <span>•</span>
+                    <span className="text-xs">Edited</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -111,7 +149,24 @@ const PostCard = ({ post }) => {
 
       {/* Post Content */}
       <div className="px-4 py-3">
-        <p className="text-gray-800 leading-relaxed">{post.content}</p>
+        {post.caption && (
+          <div className="text-gray-800 leading-relaxed mb-3">
+            {post.caption.split('\n').map((line, index) => (
+              <p key={index} className={index > 0 ? 'mt-2' : ''}>
+                {line.split(' ').map((word, wordIndex) => {
+                  if (word.startsWith('#')) {
+                    return (
+                      <span key={wordIndex} className="text-blue-600 hover:text-blue-700 cursor-pointer">
+                        {word}{' '}
+                      </span>
+                    );
+                  }
+                  return word + ' ';
+                })}
+              </p>
+            ))}
+          </div>
+        )}
         {renderMedia()}
       </div>
 
@@ -119,10 +174,11 @@ const PostCard = ({ post }) => {
       <div className="px-4 py-2 border-t border-gray-100">
         <div className="flex items-center justify-between text-sm text-gray-500">
           <div className="flex items-center space-x-4">
-            <span>{post.likes} likes</span>
-            <span>{post.comments} comments</span>
+            <span>{likeCount} likes</span>
+            <span>{post.comment_count} comments</span>
+            <span>{post.view_count} views</span>
           </div>
-          <span>{post.shares} shares</span>
+          <span className="capitalize">{post.visibility}</span>
         </div>
       </div>
 
