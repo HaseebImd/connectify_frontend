@@ -161,7 +161,7 @@ export const usePostCreation = () => {
   /**
    * Submit the post
    */
-  const submitPost = useCallback(async () => {
+  const submitPost = useCallback(async (onSuccess) => {
     if (!validateForm()) {
       return { success: false, error: 'Please fix the errors above' };
     }
@@ -193,6 +193,11 @@ export const usePostCreation = () => {
           isModalOpen: false,
           uploadProgress: 0
         }));
+
+        // Call success callback if provided (for feed refresh)
+        if (onSuccess) {
+          onSuccess(result.data);
+        }
 
         // Navigate to feed page
         navigate('/feed');

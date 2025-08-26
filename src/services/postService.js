@@ -251,6 +251,48 @@ export const postService = {
         year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
     }
+  },
+
+  /**
+   * Fetch trending hashtags
+   * @param {number} limit - Number of hashtags to fetch (default: 4)
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  fetchHashtags: async (limit = 4) => {
+    try {
+      const response = await api.get('/hashtags/');
+
+      if (response.data && response.data.results) {
+        // Get top hashtags (they're already ordered by usage_count)
+        const topHashtags = response.data.results.slice(0, limit);
+        
+        return {
+          success: true,
+          data: topHashtags
+        };
+      }
+
+      return {
+        success: true,
+        data: []
+      };
+
+    } catch (error) {
+      console.error('Fetch hashtags error:', error);
+
+      let errorMessage = 'Failed to fetch hashtags.';
+
+      if (error.response?.status === 401) {
+        errorMessage = 'You must be logged in to view hashtags.';
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        errorMessage = 'Unable to connect to server.';
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
   }
 };
 

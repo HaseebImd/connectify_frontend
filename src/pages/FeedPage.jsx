@@ -1,14 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/layout/Layout';
 import PageTransition from '../components/common/PageTransition';
 import FeedContainer from '../components/feed/FeedContainer';
 import CreatePost from '../components/feed/CreatePost';
+import TrendingHashtags from '../components/feed/TrendingHashtags';
 
 const FeedPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, loading , user} = useAuth();
+  const feedContainerRef = useRef();
 
   useEffect(() => {
     // Check if user is authenticated
@@ -77,10 +79,13 @@ const FeedPage = () => {
               <div className="lg:col-span-2 overflow-y-auto pb-6 scrollbar-hide" style={{ height: 'calc(100vh - 97px)' }}>
                 <div className="space-y-6">
                   {/* Create Post Section */}
-                  <CreatePost user={user} />
+                  <CreatePost 
+                    user={user} 
+                    onPostCreated={() => feedContainerRef.current?.refresh()} 
+                  />
 
                   {/* Feed Container */}
-                  <FeedContainer />
+                  <FeedContainer ref={feedContainerRef} />
                 </div>
               </div>
 
@@ -117,23 +122,8 @@ const FeedPage = () => {
                     </button>
                   </div>
 
-                  {/* Trending Topics */}
-                  <div className="bg-white rounded-lg shadow-sm p-4">
-                    <h3 className="font-semibold text-gray-900 mb-3">Trending Topics</h3>
-                    <div className="space-y-2">
-                      {[
-                        { topic: '#Technology', posts: '1.2k posts' },
-                        { topic: '#Travel', posts: '856 posts' },
-                        { topic: '#Photography', posts: '642 posts' },
-                        { topic: '#Food', posts: '534 posts' },
-                      ].map((trend, index) => (
-                        <div key={index} className="p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                          <p className="font-medium text-gray-900 text-sm">{trend.topic}</p>
-                          <p className="text-gray-500 text-xs">{trend.posts}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Trending Hashtags */}
+                  <TrendingHashtags />
                 </div>
               </div>
             </div>

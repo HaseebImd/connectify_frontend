@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Heart, MessageCircle, Share, MoreHorizontal, Play, MapPin, Eye } from 'lucide-react';
 import Card from '../ui/Card';
+import ImageLightbox from '../ui/ImageLightbox';
 import postService from '../../services/postService';
 
 const PostCard = ({ post, onLike, onViewIncrement }) => {
   const [liked, setLiked] = useState(post.is_liked || false);
   const [showComments, setShowComments] = useState(false);
   const [likeCount, setLikeCount] = useState(post.like_count || 0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleLike = () => {
     const newLikedState = !liked;
@@ -25,6 +28,12 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
     }
   };
 
+  const handleImageClick = (mediaItem, index) => {
+    handleViewIncrement();
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
   const renderMedia = () => {
     if (!post.media || post.media.length === 0) return null;
 
@@ -37,8 +46,8 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
               <img
                 src={postService.getMediaUrl(post.media[0].file)}
                 alt="Post media"
-                className="w-full object-cover max-h-96 cursor-pointer"
-                onClick={handleViewIncrement}
+                className="w-full object-cover max-h-96 cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={() => handleImageClick(post.media[0], 0)}
               />
             ) : (
               <div className="relative bg-black rounded-lg aspect-video">
@@ -47,7 +56,7 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
                   poster={post.media[0].thumbnail ? postService.getMediaUrl(post.media[0].thumbnail) : undefined}
                   className="w-full h-full object-cover"
                   controls
-                  onClick={handleViewIncrement}
+                  onPlay={handleViewIncrement}
                 />
                 <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                   {post.media[0].duration_seconds ? `${Math.floor(post.media[0].duration_seconds / 60)}:${(post.media[0].duration_seconds % 60).toString().padStart(2, '0')}` : 'Video'}
@@ -55,43 +64,146 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
               </div>
             )}
           </div>
-        ) : (
-          // Multiple media items - grid layout
-          <div className={`grid gap-1 rounded-lg overflow-hidden ${
-            post.media.length === 2 ? 'grid-cols-2' : 
-            post.media.length === 3 ? 'grid-cols-2' : 
-            'grid-cols-2'
-          }`}>
-            {post.media.slice(0, 4).map((mediaItem, index) => (
-              <div key={mediaItem.id} className="relative">
+        ) : post.media.length === 2 ? (
+          // Two media items - side by side
+          <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+            {post.media.map((mediaItem, index) => (
+              <div key={mediaItem.id} className="relative aspect-square">
                 {mediaItem.media_type === 'image' ? (
                   <img
                     src={postService.getMediaUrl(mediaItem.file)}
                     alt={`Post media ${index + 1}`}
-                    className="w-full h-32 object-cover cursor-pointer"
-                    onClick={handleViewIncrement}
+                    className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => handleImageClick(mediaItem, index)}
                   />
                 ) : (
-                  <div className="relative bg-black h-32">
+                  <div className="relative bg-black w-full h-full">
                     <video
                       src={postService.getMediaUrl(mediaItem.file)}
                       poster={mediaItem.thumbnail ? postService.getMediaUrl(mediaItem.thumbnail) : undefined}
                       className="w-full h-full object-cover"
                       muted
                     />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Play className="w-8 h-8 text-white" />
+                    <div className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black hover:bg-opacity-20 transition-colors">
+                      <Play className="w-12 h-12 text-white" />
                     </div>
-                  </div>
-                )}
-                {/* Show count overlay for 4+ images */}
-                {index === 3 && post.media.length > 4 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <span className="text-white text-lg font-semibold">+{post.media.length - 4}</span>
                   </div>
                 )}
               </div>
             ))}
+          </div>
+        ) : post.media.length === 3 ? (
+          // Three media items - Facebook style layout
+          <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+            <div className="row-span-2">
+              {post.media[0].media_type === 'image' ? (
+                <img
+                  src={postService.getMediaUrl(post.media[0].file)}
+                  alt="Post media 1"
+                  className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                  onClick={() => handleImageClick(post.media[0], 0)}
+                />
+              ) : (
+                <div className="relative bg-black w-full h-full">
+                  <video
+                    src={postService.getMediaUrl(post.media[0].file)}
+                    poster={post.media[0].thumbnail ? postService.getMediaUrl(post.media[0].thumbnail) : undefined}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black hover:bg-opacity-20 transition-colors">
+                    <Play className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-rows-2 gap-1">
+              {post.media.slice(1, 3).map((mediaItem, index) => (
+                <div key={mediaItem.id} className="relative">
+                  {mediaItem.media_type === 'image' ? (
+                    <img
+                      src={postService.getMediaUrl(mediaItem.file)}
+                      alt={`Post media ${index + 2}`}
+                      className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                      onClick={() => handleImageClick(mediaItem, index + 1)}
+                    />
+                  ) : (
+                    <div className="relative bg-black w-full h-full">
+                      <video
+                        src={postService.getMediaUrl(mediaItem.file)}
+                        poster={mediaItem.thumbnail ? postService.getMediaUrl(mediaItem.thumbnail) : undefined}
+                        className="w-full h-full object-cover"
+                        muted
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black hover:bg-opacity-20 transition-colors">
+                        <Play className="w-8 h-8 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          // Four or more media items - Facebook style with overlay
+          <div className="grid grid-cols-2 gap-1 rounded-lg overflow-hidden">
+            <div className="row-span-2">
+              {post.media[0].media_type === 'image' ? (
+                <img
+                  src={postService.getMediaUrl(post.media[0].file)}
+                  alt="Post media 1"
+                  className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                  onClick={() => handleImageClick(post.media[0], 0)}
+                />
+              ) : (
+                <div className="relative bg-black w-full h-full">
+                  <video
+                    src={postService.getMediaUrl(post.media[0].file)}
+                    poster={post.media[0].thumbnail ? postService.getMediaUrl(post.media[0].thumbnail) : undefined}
+                    className="w-full h-full object-cover"
+                    muted
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black hover:bg-opacity-20 transition-colors">
+                    <Play className="w-12 h-12 text-white" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-rows-2 gap-1">
+              {post.media.slice(1, 3).map((mediaItem, index) => (
+                <div key={mediaItem.id} className="relative">
+                  {mediaItem.media_type === 'image' ? (
+                    <img
+                      src={postService.getMediaUrl(mediaItem.file)}
+                      alt={`Post media ${index + 2}`}
+                      className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity"
+                      onClick={() => handleImageClick(mediaItem, index + 1)}
+                    />
+                  ) : (
+                    <div className="relative bg-black w-full h-full">
+                      <video
+                        src={postService.getMediaUrl(mediaItem.file)}
+                        poster={mediaItem.thumbnail ? postService.getMediaUrl(mediaItem.thumbnail) : undefined}
+                        className="w-full h-full object-cover"
+                        muted
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center cursor-pointer hover:bg-black hover:bg-opacity-20 transition-colors">
+                        <Play className="w-8 h-8 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  {/* Show count overlay for the last visible image if there are more */}
+                  {index === 1 && post.media.length > 3 && (
+                    <div 
+                      className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center cursor-pointer hover:bg-opacity-70 transition-colors"
+                      onClick={() => handleImageClick(mediaItem, index + 1)}
+                    >
+                      <span className="text-white text-2xl font-semibold">+{post.media.length - 3}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -99,7 +211,8 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
   };
 
   return (
-    <Card variant="elevated" padding="none">
+    <>
+      <Card variant="elevated" padding="none">
       {/* Post Header */}
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between">
@@ -240,7 +353,16 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
           </div>
         </div>
       )}
-    </Card>
+      </Card>
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        images={post.media || []}
+        initialIndex={lightboxIndex}
+      />
+    </>
   );
 };
 

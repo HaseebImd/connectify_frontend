@@ -10,7 +10,7 @@ import useToast from '../../hooks/useToast';
  * Create Post Trigger Component
  * Opens the CreatePostModal when clicked
  */
-const CreatePost = () => {
+const CreatePost = ({ onPostCreated }) => {
     const { user } = useContext(AuthContext);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { toasts, removeToast } = useToast();
@@ -87,7 +87,8 @@ const CreatePost = () => {
             {/* Create Post Modal */}
             <CreatePostModal 
                 isOpen={isModalOpen} 
-                onClose={handleCloseModal} 
+                onClose={handleCloseModal}
+                onPostCreated={onPostCreated}
             />
 
             {/* Toast Notifications */}

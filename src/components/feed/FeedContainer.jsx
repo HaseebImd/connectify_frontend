@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import PostCard from './PostCard';
 import useFeed from '../../hooks/useFeed';
 import Button from '../ui/Button';
 
-const FeedContainer = () => {
+const FeedContainer = forwardRef((props, ref) => {
   const {
     posts,
     loading,
@@ -16,6 +16,11 @@ const FeedContainer = () => {
     toggleLike,
     incrementViewCount
   } = useFeed();
+
+  // Expose refresh function to parent component
+  useImperativeHandle(ref, () => ({
+    refresh
+  }));
 
   // Loading state for first load
   if (isFirstLoad) {
@@ -132,6 +137,6 @@ const FeedContainer = () => {
       )}
     </div>
   );
-};
+});
 
 export default FeedContainer;

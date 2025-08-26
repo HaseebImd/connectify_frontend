@@ -11,7 +11,7 @@ import VisibilitySelector from './VisibilitySelector';
  * Facebook-style Create Post Modal Component
  * Features: File upload, visibility settings, animated interactions
  */
-const CreatePostModal = ({ isOpen, onClose }) => {
+const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const { user } = useContext(AuthContext);
   const { showSuccess, showError } = useToast();
   
@@ -30,7 +30,12 @@ const CreatePostModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const result = await submitPost();
+    const result = await submitPost((newPost) => {
+      // Call the callback to refresh feed
+      if (onPostCreated) {
+        onPostCreated(newPost);
+      }
+    });
     
     if (result.success) {
       showSuccess('Post created successfully! 🎉');
