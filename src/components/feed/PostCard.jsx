@@ -239,9 +239,9 @@ const PostCard = ({ post, onLike, onViewIncrement }) => {
                 {post.location && (
                   <>
                     <span>•</span>
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors">
                       <MapPin className="w-3 h-3" />
-                      <span>{post.location}</span>
+                      <span className="hover:underline">{post.location}</span>
                     </div>
                   </>
                 )}

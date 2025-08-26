@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
-import { X, MapPin, Image as ImageIcon } from 'lucide-react';
+import { X, Image as ImageIcon } from 'lucide-react';
 import AuthContext from '../../context/AuthContext';
 import usePostCreation from '../../hooks/usePostCreation';
 import useToast from '../../hooks/useToast';
 import Button from '../ui/Button';
 import FileUpload from './FileUpload';
 import VisibilitySelector from './VisibilitySelector';
+import LocationSelector from './LocationSelector';
 
 /**
  * Facebook-style Create Post Modal Component
@@ -133,20 +134,13 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
               </div>
             </div>
 
-            {/* Location Input */}
+            {/* Location Selector */}
             <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Add location"
-                  value={formData.location}
-                  onChange={(e) => updateField('location', e.target.value)}
-                  disabled={isSubmitting}
-                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  maxLength={255}
-                />
-              </div>
+              <LocationSelector
+                value={formData.location}
+                onChange={(value) => updateField('location', value)}
+                disabled={isSubmitting}
+              />
               {errors.location && (
                 <p className="text-sm text-red-600">{errors.location}</p>
               )}
